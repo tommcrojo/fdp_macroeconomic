@@ -173,6 +173,8 @@ class DatabaseLoader:
         finally:
             session.close()
     
+    # Update the load_economic_data method in database_loader.py
+
     def load_economic_data(self, data_df: pd.DataFrame) -> Tuple[int, int, int]:
         """
         Load economic indicators into the database.
@@ -208,7 +210,19 @@ class DatabaseLoader:
         
         try:
             countries = session.query(Country).all()
-            country_mapping = {country.iso_code: country.country_id for country in countries}
+            # Store both the exact code and the code converted to uppercase for matching
+            for country in countries:
+                country_mapping[country.iso_code] = country.country_id
+                # Also add uppercase version for case-insensitive matching
+                country_mapping[country.iso_code.upper()] = country.country_id
+            
+            logger.info(f"Country mapping contains {len(countries)} countries")
+            logger.info(f"Sample country mappings: {list(country_mapping.items())[:5]}")
+            
+            # Debug: Show what country codes we're looking for
+            unique_codes = data_df['country_code'].unique()
+            logger.info(f"Looking for country codes: {unique_codes}")
+            
         except Exception as e:
             logger.error(f"Error querying countries: {str(e)}")
             session.close()
@@ -222,13 +236,20 @@ class DatabaseLoader:
                 try:
                     country_code = row['country_code']
                     
-                    # Skip if country not found
-                    if country_code not in country_mapping:
+                    # Try exact match first
+                    if country_code in country_mapping:
+                        country_id = country_mapping[country_code]
+                    # Try uppercase match
+                    elif country_code.upper() in country_mapping:
+                        country_id = country_mapping[country_code.upper()]
+                    # No match found
+                    else:
+                        # Let's dump the full mapping for debugging
                         logger.warning(f"Country code not found: {country_code}")
+                        logger.info(f"Available country codes: {list(country_mapping.keys())[:20]}")
                         ignored += 1
                         continue
                     
-                    country_id = country_mapping[country_code]
                     date = row['date']
                     
                     # Check if record already exists
@@ -279,6 +300,11 @@ class DatabaseLoader:
             
             # Final commit
             session.commit()
+            
+            # Verify data was actually saved
+            count = session.query(EconomicData).count()
+            logger.info(f"Verification: {count} records in economic_data table after loading")
+            
             logger.info(f"Economic data loaded: {inserted} inserted, {updated} updated, {ignored} ignored")
             
             # Log the process

@@ -60,6 +60,24 @@ class WorldBankExtractor:
         self.api_url = api_url or WORLD_BANK_API_URL
         self.session = requests.Session()
     
+    def get_iso3_country_code(self, iso2_code: str) -> str:
+        """Convert 2-letter ISO code to 3-letter ISO code."""
+        # Common mappings for the countries we're using
+        iso2_to_iso3 = {
+            'US': 'USA',
+            'GB': 'GBR',
+            'DE': 'DEU',
+            'JP': 'JPN',
+            'BR': 'BRA',
+            'IN': 'IND',
+            'ZA': 'ZAF',
+            'FR': 'FRA',
+            'CA': 'CAN',
+            'CN': 'CHN'
+        }
+        
+        return iso2_to_iso3.get(iso2_code, iso2_code)
+    
     def get_countries(self) -> pd.DataFrame:
         """
         Get list of countries from World Bank.
@@ -206,7 +224,7 @@ class WorldBankExtractor:
         
         for country_code in country_codes:
             country_data = {}
-            country_data['country_code'] = country_code
+            country_data['country_code'] = self.get_iso3_country_code(country_code)
             
             for indicator_name, indicator_code in INDICATOR_CODES.items():
                 logger.info(f"Fetching {indicator_name} for {country_code}...")

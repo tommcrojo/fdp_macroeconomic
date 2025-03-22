@@ -71,6 +71,30 @@ class IndexCalculator:
         self.engine = create_engine(self.db_url)
         self.Session = sessionmaker(bind=self.engine)
     
+    def _convert_country_codes(self, country_codes: List[str]) -> List[str]:
+        """Convert 2-letter to 3-letter ISO codes if needed."""
+        iso2_to_iso3 = {
+            'US': 'USA',
+            'GB': 'GBR',
+            'DE': 'DEU',
+            'JP': 'JPN',
+            'BR': 'BRA',
+            'IN': 'IND',
+            'ZA': 'ZAF',
+            'FR': 'FRA',
+            'CA': 'CAN',
+            'CN': 'CHN'
+        }
+        
+        converted_codes = []
+        for code in country_codes:
+            if len(code) == 2 and code in iso2_to_iso3:
+                converted_codes.append(iso2_to_iso3[code])
+            else:
+                converted_codes.append(code)
+        
+        return converted_codes
+
     def get_economic_data(self, country_codes: Optional[List[str]] = None, 
                         start_date: Optional[str] = None,
                         end_date: Optional[str] = None) -> pd.DataFrame:
@@ -87,6 +111,10 @@ class IndexCalculator:
         """
         session = self.Session()
         try:
+            if country_codes:
+                country_codes = self._convert_country_codes(country_codes)
+                logger.info(f"Converted country codes: {country_codes}")
+                
             # Start query
             query = session.query(
                 Country.country_id,
