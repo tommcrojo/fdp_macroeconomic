@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Airflow
+airflow/logs/
+airflow/*.db
+airflow/*.pid
+airflow-webserver.pid
+webserver_config.py
+
+# Project
+data/economic_indicators/raw/*.csv
+data/economic_indicators/raw/*.json
+data/economic_indicators/processed/*.csv
+data/economic_indicators/processed/*.json
+data/freedom_index/raw/*.csv
+data/freedom_index/raw/*.html
+data/freedom_index/processed/*.csv
+data/news/raw/*/*.json
+data/news/processed/*/*.csv
+data/indices/calculated/*.csv
+data/sentiment_analysis/*.csv
+data/sentiment_analysis/*.json
+country_analysis.db
+logs/*.log
+
+# Environment variables
+.env
+.venv
+.env.local
+
+# OS specific
+.DS_Store
+.idea/
+.vscode/
