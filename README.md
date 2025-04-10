@@ -54,6 +54,20 @@ El sistema sigue una arquitectura ETL (Extracción, Transformación, Carga) con 
 * **Configuración Flexible**: Parametrización mediante variables de entorno
 
 ## Resultados y Métricas
+### Indicador de Prosperidad Económica
+Incluye 12 indicadores con los siguientes pesos:
+GDP per capita (15%)
+GDP growth (10%)
+Inflation rate (10%)
+Unemployment rate (10%)
+Interest rate (5%)
+Gross Capital Formation (10%)
+Trade Balance (5%)
+FDI Inflow (10%)
+Government Debt (5%)
+International Reserves (5%)
+Education Expenditure (10%)
+Research Expenditure (5%)
 
 ### Métricas Cuantificables
 * **Datos Procesados**: Capacidad para procesar datos de 217 países
