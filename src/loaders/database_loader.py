@@ -173,8 +173,6 @@ class DatabaseLoader:
         finally:
             session.close()
     
-    # Update the load_economic_data method in database_loader.py
-
     def load_economic_data(self, data_df: pd.DataFrame) -> Tuple[int, int, int]:
         """
         Load economic indicators into the database.
@@ -260,25 +258,40 @@ class DatabaseLoader:
                         )
                     ).first()
                     
-                    # Prepare data
+                    # Define all expected indicator columns based on the EconomicData model
+                    # (excluding primary/foreign keys, date, and created_at)
+                    indicator_columns = [
+                        'inflation_rate', 'unemployment_rate', 'gdp_per_capita', 
+                        'interest_rate', 'gdp_growth', 'gross_capital_formation', 
+                        'trade_balance', 'fdi_inflow', 'government_debt', 
+                        'international_reserves', 'education_expenditure', 
+                        'research_expenditure'
+                    ]
+                    
+                    # Prepare data dynamically
                     data = {
                         'country_id': country_id,
                         'date': date,
-                        'inflation_rate': row.get('inflation_rate'),
-                        'unemployment_rate': row.get('unemployment_rate'),
-                        'gdp_per_capita': row.get('gdp_per_capita'),
-                        'interest_rate': row.get('interest_rate'),
-                        'created_at': datetime.now()
                     }
+                    for col_name in indicator_columns:
+                        # Use row.get(col_name, None) to safely get value, default to None if missing
+                        data[col_name] = row.get(col_name, None) 
                     
                     if existing:
                         # Update existing record if values are different
                         update_needed = False
                         
+                        # Check all indicator columns for differences
                         for key, value in data.items():
-                            if key != 'created_at' and getattr(existing, key) != value:
-                                setattr(existing, key, value)
-                                update_needed = True
+                            # Skip keys not directly mapped to model columns if any future changes add helper keys
+                            if hasattr(existing, key):
+                                # Handle potential type mismatches (e.g., None vs. float)
+                                existing_value = getattr(existing, key)
+                                # Basic check: are they different? Handles None vs value.
+                                # More robust checks might be needed for float precision if required.
+                                if existing_value != value and not (pd.isna(existing_value) and pd.isna(value)):
+                                    setattr(existing, key, value)
+                                    update_needed = True
                         
                         if update_needed:
                             updated += 1
@@ -286,6 +299,7 @@ class DatabaseLoader:
                             ignored += 1
                     else:
                         # Insert new record
+                        # created_at will use the model default
                         session.add(EconomicData(**data))
                         inserted += 1
                     

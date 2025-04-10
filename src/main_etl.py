@@ -108,6 +108,12 @@ def run_extraction(countries: List[str], start_year: int = 2015) -> Dict:
         
         logger.info(f"Extracted {len(economic_df)} economic indicator records")
         
+        if economic_df is not None:
+            logger.info(f"Extracted economic_df columns: {economic_df.columns.tolist()}")
+            logger.info(f"Extracted economic_df head:\\n{economic_df.head().to_string()}")
+        else:
+            logger.warning("Economic DataFrame is None after extraction.")
+        
         return {
             'status': 'success',
             'message': 'Extraction completed successfully',
