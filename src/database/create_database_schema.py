@@ -88,6 +88,14 @@ class EconomicData(Base):
     unemployment_rate = Column(Float)
     gdp_per_capita = Column(Float)
     interest_rate = Column(Float)
+    gdp_growth = Column(Float)  # GDP growth rate
+    gross_capital_formation = Column(Float)  # Gross capital formation as % of GDP
+    trade_balance = Column(Float)  # Trade balance as % of GDP
+    fdi_inflow = Column(Float)  # Foreign direct investment inflow as % of GDP
+    government_debt = Column(Float)  # Government debt as % of GDP
+    international_reserves = Column(Float)  # International reserves in USD
+    education_expenditure = Column(Float)  # Education expenditure as % of GDP
+    research_expenditure = Column(Float)  # R&D expenditure as % of GDP
     created_at = Column(DateTime, default=datetime.now)
     
     # Relationship with Country

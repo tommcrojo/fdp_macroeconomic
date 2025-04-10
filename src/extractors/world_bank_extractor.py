@@ -41,7 +41,15 @@ INDICATOR_CODES = {
     'inflation_rate': 'FP.CPI.TOTL.ZG',       # Inflation, consumer prices (annual %)
     'unemployment_rate': 'SL.UEM.TOTL.ZS',    # Unemployment, total (% of total labor force)
     'gdp_per_capita': 'NY.GDP.PCAP.CD',       # GDP per capita (current US$)
-    'interest_rate': 'FR.INR.LEND'            # Lending interest rate (%)
+    'interest_rate': 'FR.INR.LEND',           # Lending interest rate (%)
+    'gdp_growth': 'NY.GDP.MKTP.KD.ZG',        # GDP growth (annual %)
+    'gross_capital_formation': 'NE.GDI.TOTL.ZS',  # Gross capital formation (% of GDP)
+    'trade_balance': 'NE.RSB.GNFS.ZS',        # External balance on goods and services (% of GDP)
+    'fdi_inflow': 'BX.KLT.DINV.WD.GD.ZS',    # Foreign direct investment, net inflows (% of GDP)
+    'government_debt': 'GC.DOD.TOTL.GD.ZS',   # Central government debt, total (% of GDP)
+    'international_reserves': 'FI.RES.TOTL.CD',  # Total reserves (includes gold, current US$)
+    'education_expenditure': 'SE.XPD.TOTL.GD.ZS',  # Government expenditure on education (% of GDP)
+    'research_expenditure': 'GB.XPD.RSDV.GD.ZS'  # Research and development expenditure (% of GDP)
 }
 
 

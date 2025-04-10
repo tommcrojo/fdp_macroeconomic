@@ -124,7 +124,15 @@ class IndexCalculator:
                 EconomicData.inflation_rate,
                 EconomicData.unemployment_rate,
                 EconomicData.gdp_per_capita,
-                EconomicData.interest_rate
+                EconomicData.interest_rate,
+                EconomicData.gdp_growth,
+                EconomicData.gross_capital_formation,
+                EconomicData.trade_balance,
+                EconomicData.fdi_inflow,
+                EconomicData.government_debt,
+                EconomicData.international_reserves,
+                EconomicData.education_expenditure,
+                EconomicData.research_expenditure
             ).join(
                 EconomicData, 
                 Country.country_id == EconomicData.country_id
@@ -156,7 +164,15 @@ class IndexCalculator:
                     'inflation_rate': row.inflation_rate,
                     'unemployment_rate': row.unemployment_rate,
                     'gdp_per_capita': row.gdp_per_capita,
-                    'interest_rate': row.interest_rate
+                    'interest_rate': row.interest_rate,
+                    'gdp_growth': row.gdp_growth,
+                    'gross_capital_formation': row.gross_capital_formation,
+                    'trade_balance': row.trade_balance,
+                    'fdi_inflow': row.fdi_inflow,
+                    'government_debt': row.government_debt,
+                    'international_reserves': row.international_reserves,
+                    'education_expenditure': row.education_expenditure,
+                    'research_expenditure': row.research_expenditure
                 })
             
             df = pd.DataFrame(records)
@@ -192,7 +208,12 @@ class IndexCalculator:
         
         # Check required columns
         required_cols = ['country_id', 'country_code', 'date']
-        indicator_cols = ['gdp_per_capita', 'inflation_rate', 'unemployment_rate', 'interest_rate']
+        indicator_cols = [
+            'gdp_per_capita', 'inflation_rate', 'unemployment_rate', 'interest_rate',
+            'gdp_growth', 'gross_capital_formation', 'trade_balance', 'fdi_inflow',
+            'government_debt', 'international_reserves', 'education_expenditure',
+            'research_expenditure'
+        ]
         
         missing_required = [col for col in required_cols if col not in df.columns]
         if missing_required:
@@ -218,58 +239,134 @@ class IndexCalculator:
                 result_df[col] = result_df[col].fillna(global_mean)
         
         # Normalize indicators to 0-100 scale
+        
         # 1. GDP per capita (higher is better)
         if 'gdp_per_capita' in result_df.columns:
             min_gdp = result_df['gdp_per_capita'].min()
             max_gdp = result_df['gdp_per_capita'].max()
-            
             if max_gdp > min_gdp:
                 result_df['gdp_normalized'] = 100 * (result_df['gdp_per_capita'] - min_gdp) / (max_gdp - min_gdp)
             else:
-                result_df['gdp_normalized'] = 50  # Default if all values are the same
+                result_df['gdp_normalized'] = 50
         else:
-            result_df['gdp_normalized'] = 50  # Default if no GDP data
+            result_df['gdp_normalized'] = 50
         
-        # 2. Inflation rate (lower is better, but negative inflation is also not good)
-        # For inflation, we use a different approach: optimal is around 2%, 
-        # too high or too negative are both bad
+        # 2. GDP Growth (higher is better, but extreme values are concerning)
+        if 'gdp_growth' in result_df.columns:
+            # Score is highest at 3% growth, decreases in both directions
+            result_df['gdp_growth_normalized'] = 100 - 15 * np.abs(result_df['gdp_growth'] - 3)
+            result_df['gdp_growth_normalized'] = result_df['gdp_growth_normalized'].clip(0, 100)
+        else:
+            result_df['gdp_growth_normalized'] = 50
+        
+        # 3. Inflation rate (optimal around 2%)
         if 'inflation_rate' in result_df.columns:
-            # Score is highest (100) at 2% inflation, decreases in both directions
             result_df['inflation_normalized'] = 100 - 10 * np.abs(result_df['inflation_rate'] - 2)
-            # Cap at 0 and 100
             result_df['inflation_normalized'] = result_df['inflation_normalized'].clip(0, 100)
         else:
-            result_df['inflation_normalized'] = 50  # Default if no inflation data
+            result_df['inflation_normalized'] = 50
         
-        # 3. Unemployment rate (lower is better)
+        # 4. Unemployment rate (lower is better)
         if 'unemployment_rate' in result_df.columns:
             min_unemp = result_df['unemployment_rate'].min()
             max_unemp = result_df['unemployment_rate'].max()
-            
             if max_unemp > min_unemp:
                 result_df['unemployment_normalized'] = 100 * (1 - (result_df['unemployment_rate'] - min_unemp) / (max_unemp - min_unemp))
             else:
-                result_df['unemployment_normalized'] = 50  # Default if all values are the same
+                result_df['unemployment_normalized'] = 50
         else:
-            result_df['unemployment_normalized'] = 50  # Default if no unemployment data
+            result_df['unemployment_normalized'] = 50
         
-        # 4. Interest rate (lower is generally better, but too low can be problematic)
-        # Similar to inflation, optimal is around 3-4%
+        # 5. Interest rate (optimal around 3-4%)
         if 'interest_rate' in result_df.columns:
-            # Score is highest at 3.5% interest rate, decreases in both directions
             result_df['interest_normalized'] = 100 - 8 * np.abs(result_df['interest_rate'] - 3.5)
-            # Cap at 0 and 100
             result_df['interest_normalized'] = result_df['interest_normalized'].clip(0, 100)
         else:
-            result_df['interest_normalized'] = 50  # Default if no interest rate data
+            result_df['interest_normalized'] = 50
         
-        # Calculate the economic prosperity index with weights
-        # Weights: GDP (40%), Unemployment (30%), Inflation (20%), Interest Rate (10%)
+        # 6. Gross Capital Formation (higher is better)
+        if 'gross_capital_formation' in result_df.columns:
+            min_gcf = result_df['gross_capital_formation'].min()
+            max_gcf = result_df['gross_capital_formation'].max()
+            if max_gcf > min_gcf:
+                result_df['gcf_normalized'] = 100 * (result_df['gross_capital_formation'] - min_gcf) / (max_gcf - min_gcf)
+            else:
+                result_df['gcf_normalized'] = 50
+        else:
+            result_df['gcf_normalized'] = 50
+        
+        # 7. Trade Balance (balanced is better)
+        if 'trade_balance' in result_df.columns:
+            result_df['trade_normalized'] = 100 - 5 * np.abs(result_df['trade_balance'])
+            result_df['trade_normalized'] = result_df['trade_normalized'].clip(0, 100)
+        else:
+            result_df['trade_normalized'] = 50
+        
+        # 8. FDI Inflow (higher is better)
+        if 'fdi_inflow' in result_df.columns:
+            min_fdi = result_df['fdi_inflow'].min()
+            max_fdi = result_df['fdi_inflow'].max()
+            if max_fdi > min_fdi:
+                result_df['fdi_normalized'] = 100 * (result_df['fdi_inflow'] - min_fdi) / (max_fdi - min_fdi)
+            else:
+                result_df['fdi_normalized'] = 50
+        else:
+            result_df['fdi_normalized'] = 50
+        
+        # 9. Government Debt (lower is better, but too low might be suboptimal)
+        if 'government_debt' in result_df.columns:
+            result_df['debt_normalized'] = 100 - np.maximum(0, (result_df['government_debt'] - 60) / 2)
+            result_df['debt_normalized'] = result_df['debt_normalized'].clip(0, 100)
+        else:
+            result_df['debt_normalized'] = 50
+        
+        # 10. International Reserves (higher is better)
+        if 'international_reserves' in result_df.columns:
+            min_reserves = result_df['international_reserves'].min()
+            max_reserves = result_df['international_reserves'].max()
+            if max_reserves > min_reserves:
+                result_df['reserves_normalized'] = 100 * (result_df['international_reserves'] - min_reserves) / (max_reserves - min_reserves)
+            else:
+                result_df['reserves_normalized'] = 50
+        else:
+            result_df['reserves_normalized'] = 50
+        
+        # 11. Education Expenditure (higher is better)
+        if 'education_expenditure' in result_df.columns:
+            min_edu = result_df['education_expenditure'].min()
+            max_edu = result_df['education_expenditure'].max()
+            if max_edu > min_edu:
+                result_df['education_normalized'] = 100 * (result_df['education_expenditure'] - min_edu) / (max_edu - min_edu)
+            else:
+                result_df['education_normalized'] = 50
+        else:
+            result_df['education_normalized'] = 50
+        
+        # 12. Research Expenditure (higher is better)
+        if 'research_expenditure' in result_df.columns:
+            min_research = result_df['research_expenditure'].min()
+            max_research = result_df['research_expenditure'].max()
+            if max_research > min_research:
+                result_df['research_normalized'] = 100 * (result_df['research_expenditure'] - min_research) / (max_research - min_research)
+            else:
+                result_df['research_normalized'] = 50
+        else:
+            result_df['research_normalized'] = 50
+        
+        # Calculate the economic prosperity index with updated weights
         result_df['economic_prosperity_index'] = (
-            0.4 * result_df['gdp_normalized'] +
-            0.3 * result_df['unemployment_normalized'] +
-            0.2 * result_df['inflation_normalized'] +
-            0.1 * result_df['interest_normalized']
+            0.15 * result_df['gdp_normalized'] +           # GDP per capita
+            0.10 * result_df['gdp_growth_normalized'] +    # GDP growth
+            0.10 * result_df['inflation_normalized'] +     # Inflation
+            0.10 * result_df['unemployment_normalized'] +  # Unemployment
+            0.05 * result_df['interest_normalized'] +      # Interest rate
+            0.10 * result_df['gcf_normalized'] +          # Gross Capital Formation
+            0.05 * result_df['trade_normalized'] +        # Trade Balance
+            0.10 * result_df['fdi_normalized'] +          # FDI Inflow
+            0.05 * result_df['debt_normalized'] +         # Government Debt
+            0.05 * result_df['reserves_normalized'] +     # International Reserves
+            0.10 * result_df['education_normalized'] +    # Education Expenditure
+            0.05 * result_df['research_normalized']       # Research Expenditure
         )
         
         # Round to 2 decimal places
